@@ -67,9 +67,14 @@ export function renderPlayer(video) {
   }
   // YouTube embed (default). autoplay=1 needs mute=1 — browsers block autoplay
   // with sound, so the clip starts muted and the viewer can unmute in-player.
-  // rel=0 keeps related videos to the same channel; a fresh iframe is created
-  // for each video, so each one autoplays as the user advances.
-  const params = "autoplay=1&mute=1&playsinline=1&rel=0";
+  // A fresh iframe is created per video, so each one autoplays as the user
+  // advances. Distraction-reducing params: controls=0 (no control bar/logo),
+  // disablekb=1 (no keyboard scrubbing), iv_load_policy=3 (no annotations),
+  // rel=0 (end-screen suggestions limited to the same channel).
+  // NOTE: modestbranding is deprecated (no-op) and there is no supported param
+  // to hide the video title overlay — see CLAUDE.md if that matters.
+  const params =
+    "autoplay=1&mute=1&playsinline=1&rel=0&controls=0&disablekb=1&iv_load_policy=3";
   const src = video.url + (video.url.includes("?") ? "&" : "?") + params;
   return `<iframe
       class="video-frame"
