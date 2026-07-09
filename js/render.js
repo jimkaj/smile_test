@@ -62,15 +62,19 @@ export function renderIntro({ onBegin }) {
 
 export function renderPlayer(video) {
   if (video.sourceType === "direct") {
-    return `<video class="video-frame" src="${video.url}" controls playsinline></video>`;
+    // autoplay requires muted (browser policy); viewer can unmute via controls.
+    return `<video class="video-frame" src="${video.url}" autoplay muted playsinline controls></video>`;
   }
-  // YouTube embed (default). rel=0 keeps related videos to the same channel.
-  const src = video.url + (video.url.includes("?") ? "&" : "?") + "rel=0";
+  // YouTube embed (default). autoplay=1 needs mute=1 — browsers block autoplay
+  // with sound, so the clip starts muted and the viewer can unmute in-player.
+  // rel=0 keeps related videos to the same channel; a fresh iframe is created
+  // for each video, so each one autoplays as the user advances.
+  const params = "autoplay=1&mute=1&playsinline=1&rel=0";
+  const src = video.url + (video.url.includes("?") ? "&" : "?") + params;
   return `<iframe
       class="video-frame"
       src="${src}"
       title="${video.label}"
-      loading="lazy"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       allowfullscreen></iframe>`;
 }
