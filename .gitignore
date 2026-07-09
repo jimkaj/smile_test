@@ -8,3 +8,21 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Claude Code
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+
+# Raw survey export — contains respondent IP addresses (PII). Never commit
+# to this public repo. Only the derived/anonymized data/crowd_data.js
+# (produced from this file by scripts/build_crowd_data.py) is committed.
+data/Spot the Fake Smile*.csv
+
+# Editor / OS cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
