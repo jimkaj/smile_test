@@ -62,17 +62,22 @@ export function renderIntro({ onBegin }) {
 
 export function renderPlayer(video) {
   if (video.sourceType === "direct") {
-    // autoplay requires muted (browser policy); viewer can unmute via controls.
-    return `<video class="video-frame" src="${video.url}" autoplay muted playsinline controls></video>`;
+    // autoplay requires muted (browser policy). No controls attribute: a
+    // plain <video> has no title/logo/branding chrome to begin with, so
+    // nothing needs suppressing (unlike the YouTube embed case below).
+    return `<video class="video-frame" src="${video.url}" autoplay muted playsinline></video>`;
   }
-  // YouTube embed (default). autoplay=1 needs mute=1 — browsers block autoplay
-  // with sound, so the clip starts muted and the viewer can unmute in-player.
-  // A fresh iframe is created per video, so each one autoplays as the user
-  // advances. Distraction-reducing params: controls=0 (no control bar/logo),
+  // YouTube embed (fallback, currently unused by any entry in videos.js).
+  // autoplay=1 needs mute=1 — browsers block autoplay with sound, so the
+  // clip starts muted and the viewer can unmute in-player. A fresh iframe is
+  // created per video, so each one autoplays as the user advances.
+  // Distraction-reducing params: controls=0 (no control bar/logo),
   // disablekb=1 (no keyboard scrubbing), iv_load_policy=3 (no annotations),
   // rel=0 (end-screen suggestions limited to the same channel).
-  // NOTE: modestbranding is deprecated (no-op) and there is no supported param
-  // to hide the video title overlay — see CLAUDE.md if that matters.
+  // NOTE: none of these params remove the hover title/channel bar, share
+  // icon, or logo watermark YouTube draws whenever the player is paused or
+  // loading — that chrome is baked into the embed itself and cannot be
+  // suppressed from the parent page. See CLAUDE.md.
   const params =
     "autoplay=1&mute=1&playsinline=1&rel=0&controls=0&disablekb=1&iv_load_policy=3";
   const src = video.url + (video.url.includes("?") ? "&" : "?") + params;
