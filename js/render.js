@@ -162,7 +162,6 @@ export function renderSummary({ score, videos, answers, onRestart }) {
 
       <div class="summary-actions">
         <button class="btn btn-primary btn-lg" id="restart-btn" type="button">Take the test again</button>
-        <p class="soon">Coming soon: explore how ~94,000 other people answered, and see the “wisdom of the crowd” in action.</p>
       </div>
     </section>
   `);
