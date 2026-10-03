@@ -13,6 +13,7 @@ wheels/
 CLAUDE.md
 CLAUDE.local.md
 .claude/
+docs/AdvancedModePlan.md
 
 # Raw survey export — contains respondent IP addresses (PII). Never commit
 # to this public repo. Only the derived/anonymized data/crowd_data.js
