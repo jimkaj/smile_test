@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>brier.js tests</title>
+  </head>
+  <body>
+    <!-- Serve the repo root over http (python -m http.server 8000), then open
+         http://localhost:8000/tests/brier.test.html, or headless:
+         msedge --headless --virtual-time-budget=3000 --dump-dom <url> -->
+    <pre id="out">running…</pre>
+    <script type="module">
+      import { F, D, EXPECTED } from "./brier_fixture.js";
+      import { brierScore, covarianceDecomp, murphyDecomp } from "../js/brier.js";
+
+      const lines = [];
+      let failures = 0;
+      function check(name, actual, expected, tol = 1e-6) {
+        const ok = Math.abs(actual - expected) <= tol;
+        if (!ok) failures += 1;
+        lines.push(`${ok ? "PASS" : "FAIL"} ${name}: ${actual} (expected ${expected})`);
+      }
+
+      // Workbook sample (100 items).
+      const cov = covarianceDecomp(F, D);
+      const mur = murphyDecomp(F, D);
+      check("brier", brierScore(F, D), EXPECTED.brier);
+      check("bias", cov.bias, EXPECTED.bias);
+      check("slope", cov.slope, EXPECTED.slope);
+      check("scatter", cov.scatter, EXPECTED.scatter);
+      check("varD", cov.varD, EXPECTED.varD);
+      check("cov total", cov.total, EXPECTED.covTotal);
+      check("cov total == brier", cov.total, brierScore(F, D), 1e-9);
+      check("DI", mur.di, EXPECTED.di);
+      check("CI (corrected)", mur.ci, EXPECTED.ci);
+      check("murphy total", mur.total, EXPECTED.murphyTotal);
+
+      // Edge cases on the real 10 G / 10 F answer key.
+      const d20 = [...Array(10).fill(1), ...Array(10).fill(0)];
+      const all50 = Array(20).fill(0.5);
+      check("all 50% brier", brierScore(all50, d20), 0.25, 1e-12);
+      check("all 50% bias", covarianceDecomp(all50, d20).bias, 0, 1e-12);
+      check("all 50% slope", covarianceDecomp(all50, d20).slope, 0, 1e-12);
+      check("perfect brier", brierScore(d20, d20), 0, 1e-12);
+      check("all wrong brier", brierScore(d20.map((x) => 1 - x), d20), 1, 1e-12);
+      check("varD on key", covarianceDecomp(all50, d20).varD, 0.25, 1e-12);
+
+      // Random judgments: covariance decomposition must stay exact.
+      for (let t = 0; t < 200; t++) {
+        const f = d20.map(() => Math.round(Math.random() * 100) / 100);
+        const err = Math.abs(covarianceDecomp(f, d20).total - brierScore(f, d20));
+        if (err > 1e-9) {
+          failures += 1;
+          lines.push(`FAIL random #${t}: cov total off by ${err}`);
+        }
+      }
+      lines.push("PASS 200 random cases: cov total == brier");
+
+      lines.unshift(failures ? `RESULT: ${failures} FAILURE(S)` : "RESULT: ALL PASS");
+      document.getElementById("out").textContent = lines.join("\n");
+    </script>
+  </body>
+</html>

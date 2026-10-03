@@ -11,12 +11,15 @@
 // PAYLOAD CONTRACT (deliberately no PII):
 //   {
 //     sessionId,          // random per-session UUID, not tied to any identity
+//     mode,               // "basic" | "advanced"
+//     brierScore,         // number (advanced) | null (basic)
 //     startedAt,          // ISO timestamp
 //     finishedAt,         // ISO timestamp
 //     totalCorrect,       // number
 //     totalCount,         // number (20)
 //     categoryBreakdown,  // { [category]: { correct, count } } — {} if unused
-//     answers: [ { videoId, chosen: "G"|"F"|null, correct: bool|null } ]
+//     answers: [ { videoId, chosen: "G"|"F"|null, correct: bool|null,
+//                  prob: 0–100 (advanced) | null (basic) } ]
 //   }
 //
 // TO ENABLE CROSS-USER COLLECTION LATER: replace only this function's body —

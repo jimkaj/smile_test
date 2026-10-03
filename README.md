@@ -12,17 +12,20 @@ The clips were once featured on the BBC website as a public test of this skill, 
 
 ## How it works
 
-1. **Intro** — a short history of the test, then "Begin the Smile Test!"
-2. **Quiz** — 20 videos, one at a time. Pick Genuine or Fake for each; no going back.
-3. **Summary** — your score, plus a full answer reveal with the correct answer for every video.
-4. **Explore the Crowd** *(optional, from the summary screen)* — compare yourself against ~94,000 real responses to the original survey, through three interactive demos:
-   - **Wisdom of the Crowd** — simulate random groups of respondents and watch accuracy climb with group size.
-   - **T-test demo** — compare two groups' scores (e.g. gender, or professional experience "reading" people) with a live independent-samples t-test.
-   - **Correlation explorer** — see how confidence and actual performance relate (the overconfidence-bias finding from the original research).
+The intro screen offers two versions of the test:
+
+- **The Smile Test** — 20 videos, one at a time. Pick Genuine or Fake for each; no going back. Then see your score and the answer for every video.
+- **Advanced: probability & statistics** — the same 20 videos, but you answer with a 0–100% "how likely is this genuine?" slider. Afterwards a six-step walkthrough (written for upper high school / early college students) covers:
+  1. Number correct (51%+ counts as Genuine, 49%− as Fake, 50% counts as wrong).
+  2. Your **Brier score** and how it's calculated.
+  3. The Yates **covariance decomposition** of that score — task difficulty, bias, slope (discrimination), scatter.
+  4. **Calibration** — a calibration curve and the Murphy calibration/discrimination indices.
+  5. The **wisdom of the crowd** — your score against 67,427 real survey respondents; the crowd's majority vote gets 20/20.
+  6. The answers.
 
 ## Status
 
-This repo is under active development. The video manifest (`data/videos.js`), answer-key images, and the crowd-response dataset pipeline are planned/in progress; the app itself (`index.html`, `js/*`, `styles.css`) has not been built yet. See `CLAUDE.md` for the current build status and full architecture notes.
+Both modes are built. Remaining: enable GitHub Pages.
 
 ## Project structure
 
@@ -33,16 +36,21 @@ js/
   app.js             Entry point, screen dispatch
   quiz.js            Quiz state and scoring
   storage.js         sessionStorage persistence
-  render.js           All DOM rendering (intro/quiz/summary/explore screens)
+  render.js          DOM rendering: intro, basic quiz, basic summary
+  renderAdvanced.js  DOM rendering: slider quiz, advanced results walkthrough
+  charts.js          Inline-SVG chart builders (no chart library)
+  brier.js           Brier score + covariance and Murphy decompositions
   submit.js          Aggregate-mode extension point (no-op by default)
-  crowdStats.js      Stats helpers for the crowd-exploration screen
 data/
   videos.js          Video manifest: URLs, correct answers, answer images
-  crowd_data.js      Anonymized crowd-response dataset (generated, not hand-edited)
-  Smile*.jpg          Per-video and combined answer-key images
+  crowd_data.js      Aggregate crowd statistics (generated, not hand-edited)
+  smilecontent-qNN.mp4  The 20 video clips
+  Smile*.jpg         Per-video and combined answer-key images
 scripts/
   build_crowd_data.py Generates data/crowd_data.js from the raw survey export
-docs/                Reference material (original research write-up)
+tests/
+  brier.test.html    Browser test page for brier.js (workbook sample data)
+docs/                Reference material (research write-ups, proposal, Brier workbook)
 ```
 
 ## Running locally
@@ -60,12 +68,11 @@ Then visit `http://localhost:8000/`.
 Videos are defined in `data/videos.js` as a `VIDEOS` array. Each entry looks like:
 
 ```js
-{ id: "v01", label: "Video 1", sourceType: "youtube", url: "...", correctAnswer: "G", answerImage: "data/Smile01Answer.jpg" }
+{ id: "v01", label: "Video 1", sourceType: "direct", url: "data/smilecontent-q01.mp4", correctAnswer: "G", answerImage: "data/Smile01Answer.jpg" }
 ```
 
 - `correctAnswer` is always the literal `"G"` (Genuine) or `"F"` (Fake) — this is what scoring compares against, regardless of button text.
-- `sourceType` is `"youtube"` (unlisted embed) or `"direct"` (a plain `<video>` tag pointing at an external CDN URL).
-- **Never commit video files to this repo.** Host them externally (YouTube unlisted, or a CDN) and reference the URL here — GitHub blocks files over 100MB and warns above 50MB, and git keeps every past version of a binary forever.
+- `sourceType` is `"direct"` (a plain `<video>` tag) for all current entries, pointing at the clips committed in `data/`. `"youtube"` (unlisted embed) is still supported but unused, because YouTube's embed chrome can't be hidden.
 
 ## Hosting
 
@@ -77,15 +84,13 @@ By default, quiz results exist only in the user's own browser for the duration o
 
 ## Crowd-response data
 
-`data/crowd_data.js` is a small, anonymized dataset derived from a raw SurveyMonkey export of ~94,000 real responses to the original survey. The raw export contains respondent IP addresses and is **never committed** to this (public) repo — it's excluded via `.gitignore`.
+`data/crowd_data.js` holds **aggregate statistics only** — per-video share answering Genuine, the distribution of scores, the mean, and the crowd's majority-vote and Brier scores — derived from a raw SurveyMonkey export of the original survey (respondents who answered all 20 videos). No per-respondent rows are shipped. The raw export contains respondent IP addresses and is **never committed** to this (public) repo — it's excluded via `.gitignore`.
 
-To regenerate `data/crowd_data.js` from a fresh raw export:
+To regenerate `data/crowd_data.js` from the raw export:
 
 ```sh
 uv run scripts/build_crowd_data.py
 ```
-
-The script strips every identifying column (IDs, IP address, email, name, timestamps) and keeps only what the crowd-exploration screen needs: gender, age, career experience, confidence estimate, each of the 20 answers, and a computed correct-answer count.
 
 ## Credits
 

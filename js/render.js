@@ -5,7 +5,7 @@
 
 import { DEFAULT_OPTION_LABELS, COMBINED_ANSWER_IMAGE } from "../data/videos.js";
 
-function screen(html) {
+export function screen(html) {
   const root = document.getElementById("app");
   root.innerHTML = html;
   window.scrollTo(0, 0);
@@ -16,7 +16,7 @@ function optionLabels(video) {
   return { ...DEFAULT_OPTION_LABELS, ...(video.optionLabels || {}) };
 }
 
-function labelFor(video, code) {
+export function labelFor(video, code) {
   const labels = optionLabels(video);
   if (code === "G") return labels.g;
   if (code === "F") return labels.f;
@@ -46,16 +46,29 @@ export function renderIntro({ onBegin }) {
         </p>
         <p>
           You'll watch <strong>20 short clips</strong> and judge each one:
-          genuine or fake? Most people get about 13–14 right. See how you do —
-          then find out the answers.
+          genuine or fake? In the original online survey, people who finished
+          all 20 got about 15 right on average (74%). See how you do — then
+          find out the answers.
         </p>
       </div>
-      <button class="btn btn-primary btn-lg" id="begin-btn" type="button">
-        Begin the Smile Test!
-      </button>
+      <h2 class="section-title">Choose your test</h2>
+      <div class="mode-cards">
+        <div class="mode-card">
+          <h3>The Smile Test</h3>
+          <p>Watch each clip and tap <strong>Genuine</strong> or <strong>Fake</strong>. Quick, fun, and for everyone.</p>
+          <button class="btn btn-primary btn-lg" type="button" data-mode="basic">Begin the Smile Test!</button>
+        </div>
+        <div class="mode-card">
+          <h3>Advanced: probability &amp; statistics</h3>
+          <p>Say <em>how sure</em> you are with a 0–100% slider. Afterwards, learn how forecasters are scored (the Brier score), what kinds of mistakes you make, and why crowds beat individuals.</p>
+          <button class="btn btn-secondary btn-lg" type="button" data-mode="advanced">Begin the advanced test</button>
+        </div>
+      </div>
     </section>
   `);
-  root.querySelector("#begin-btn").addEventListener("click", onBegin);
+  root.querySelectorAll("[data-mode]").forEach((btn) => {
+    btn.addEventListener("click", () => onBegin(btn.dataset.mode));
+  });
 }
 
 // --- Quiz screen ------------------------------------------------------------
@@ -119,17 +132,19 @@ export function renderVideoScreen({ video, index, total, onAnswer }) {
 function scoreBlurb({ totalCorrect, totalCount }) {
   const pct = totalCorrect / totalCount;
   if (pct >= 0.9) return "Remarkable — you have a real eye for this.";
-  if (pct >= 0.75) return "Great result, well above average.";
-  if (pct >= 0.6) return "Right around where most people land.";
+  if (pct >= 0.8) return "Great result, above average.";
+  if (pct >= 0.65) return "Right around where most people land.";
   if (pct >= 0.5) return "A coin flip would get about 10 — you're in that range.";
   return "A tricky set — these smiles fool a lot of people.";
 }
 
-export function renderSummary({ score, videos, answers, onRestart }) {
-  const rows = videos
+// Per-video answer review list. formatYours(video, answer) lets the advanced
+// mode show "62%" instead of "Genuine".
+export function reviewListHtml(videos, answers, formatYours = (video, a) => labelFor(video, a.chosen)) {
+  return videos
     .map((video) => {
       const a = answers[video.id] || {};
-      const yours = labelFor(video, a.chosen);
+      const yours = formatYours(video, a);
       const truth = labelFor(video, video.correctAnswer);
       const ok = !!a.correct;
       return `
@@ -147,6 +162,10 @@ export function renderSummary({ score, videos, answers, onRestart }) {
         </li>`;
     })
     .join("");
+}
+
+export function renderSummary({ score, videos, answers, onRestart }) {
+  const rows = reviewListHtml(videos, answers);
 
   const root = screen(`
     <section class="screen summary">
