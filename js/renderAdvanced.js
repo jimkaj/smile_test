@@ -56,8 +56,15 @@ export function renderSliderScreen({ video, index, total, onAnswer }) {
   const next = root.querySelector("#next-btn");
   const value = root.querySelector("#readout-value");
   const text = root.querySelector("#readout-text");
+  // Exactly 50% isn't allowed: the thumb skips over it in the direction it was moving.
+  let prev = Number(slider.value);
   slider.addEventListener("input", () => {
-    const v = Number(slider.value);
+    let v = Number(slider.value);
+    if (v === 50) {
+      v = prev < 50 ? 51 : 49;
+      slider.value = v;
+    }
+    prev = v;
     value.textContent = `${v}%`;
     text.textContent = leaning(v);
     slider.setAttribute("aria-valuetext", `${v}% genuine, ${leaning(v)}`);
@@ -165,7 +172,7 @@ function stepBrier({ analysis, rows }) {
       <var>d</var> = 1 if the smile was genuine or 0 if it was fake. Your error on that video is the squared difference
       (<var>f</var> − <var>d</var>)². The Brier score is the average error over all 20 videos:</p>
       <p class="formula">Brier score = average of (<var>f</var> − <var>d</var>)²</p>
-      <p><strong>Lower is better.</strong> Squaring means confident mistakes hurt a lot: on a genuine smile, saying 80% costs
+      <p><strong>Lower is better.</strong> Squaring means confident mistakes hurt a lot: squaring a large difference makes a very large number compared to squaring a small difference. If a smile is genuine, saying 80% costs
       (0.8 − 1)² = 0.04 and saying 60% costs 0.16, but saying 10% costs 0.81.</p>
     </div>
     <div class="stat-row">
